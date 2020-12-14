@@ -90,7 +90,7 @@ open class OutlineViewDiffableDataSource: NSObject, NSOutlineViewDataSource, NSO
   }
 
   /// Enables dragging for items which return Pasteboard representation.
-  public func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
+  open func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
     guard let item = item as? Item, let itemId = diffableSnapshot.idForItem(item) else { return nil }
     return NSPasteboardItem(pasteboardPropertyList: itemId.uuidString, ofType: .itemID)
   }
