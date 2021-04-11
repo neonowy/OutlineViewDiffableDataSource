@@ -235,6 +235,17 @@ public extension OutlineViewDiffableDataSource {
     let difference = newIndexedIds.difference(from: oldIndexedIds)
     let differenceWithMoves = difference.inferringMoves()
 
+    // Calculate changes in modified items found in both snapshots.
+    // Modified items will have the same `hashValue`/`itemId` (via `Hashable`), but will not be equal (via `Equatable`).
+    // TODO: Ignore items from calculated changes above that have been reordered. (`difference`)
+    let oldIds = oldIndexedIds.map(\.itemId)
+    let newIds = newIndexedIds.map(\.itemId)
+    let commonIds = Set(oldIds).intersection(newIds)
+    let oldCommonItems = Set(oldSnapshot.sortedItems().filter { commonIds.contains($0.hash) })
+    let newCommonItems = Set(newSnapshot.sortedItems().filter { commonIds.contains($0.hash) })
+    let changedCommonItems = newCommonItems.subtracting(oldCommonItems)
+    let changedCommonIndexedIds = newIndexedIds.filter { changedCommonItems.map(\.hash).contains($0.itemId) }
+
     // Apply changes changes
     func apply() {
       differenceWithMoves.forEach {
@@ -265,6 +276,16 @@ public extension OutlineViewDiffableDataSource {
             outlineView?.removeItems(at: deletionIndexes, inParent: oldParentItem, withAnimation: [.effectFade, .slideDown])
           }
         }
+      }
+
+      // Reload views for modified items with the same hash
+      changedCommonIndexedIds.forEach { indexedId in
+        let indexPath = indexedId.itemPath
+        let indexSet = IndexSet(indexPath)
+        let newParent = indexedId.parentId.flatMap(newSnapshot.itemForId)
+
+        outlineView?.removeItems(at: indexSet, inParent: newParent, withAnimation: [])
+        outlineView?.insertItems(at: indexSet, inParent: newParent, withAnimation: [])
       }
     }
 

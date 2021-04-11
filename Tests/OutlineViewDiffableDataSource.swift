@@ -4,9 +4,16 @@ import OutlineViewDiffableDataSource
 final class OutlineViewDiffableDataSourceTests: XCTestCase {
 
   private class OutlineItem: NSObject, OutlineViewItem {
+    let id: String
     let title: String
-    init(title: String) { self.title = title }
-    override var hash: Int { title.hash }
+
+    init(id: String? = nil, title: String) {
+      self.id = id ?? title
+      self.title = title
+    }
+
+    override var hash: Int { id.hash }
+
     override func isEqual(_ object: Any?) -> Bool {
       guard let outlintItem = object as? OutlineItem else { return false }
       return outlintItem.title == title
@@ -126,5 +133,31 @@ final class OutlineViewDiffableDataSourceTests: XCTestCase {
     let expandedItems = (0 ..< outlineView.numberOfRows)
       .map(outlineView.item(atRow:)).compactMap { $0 as? OutlineItem }
     XCTAssertEqual(expandedItems.map(\.title), [a, a1, a2, a3, b, b1, b2].map(\.title))
+  }
+
+  func testReloadingItems() {
+
+    // GIVEN: Some items
+    let a = OutlineItem(id: "a", title: "a")
+    let b = OutlineItem(id: "b", title: "b")
+    let c = OutlineItem(id: "c", title: "c")
+
+    let newA = OutlineItem(id: "newA", title: "newA")
+
+    // GIVEN: Some items in the outline view
+    let dataSource: OutlineViewDiffableDataSource = .init(outlineView: outlineView)
+    var snapshot = DiffableDataSourceSnapshot()
+    snapshot.appendItems([a, b, c])
+    dataSource.applySnapshot(snapshot, animatingDifferences: false)
+
+    // WHEN: Some items are modified
+    var newSnapshot = DiffableDataSourceSnapshot()
+    newSnapshot.appendItems([newA, b, c])
+    dataSource.applySnapshot(newSnapshot, animatingDifferences: false)
+
+    // THEN: Outline view is updated
+    let expandedItems = (0 ..< outlineView.numberOfRows)
+      .map(outlineView.item(atRow:)).compactMap { $0 as? OutlineItem }
+    XCTAssertEqual(expandedItems.map(\.id), [newA, b, c].map(\.id))
   }
 }
