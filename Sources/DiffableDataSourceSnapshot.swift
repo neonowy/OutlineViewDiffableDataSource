@@ -8,7 +8,7 @@ public struct DiffableDataSourceSnapshot {
   public typealias Item = NSObject
 
   /// Shortcut for outline view object IDs.
-  typealias ItemID = UUID
+  typealias ItemID = Int
 
   /// Used to store tree nodes for items.
   private struct Node: Hashable {
@@ -111,7 +111,7 @@ public extension DiffableDataSourceSnapshot {
     guard validateNewItems(newItems) else { return false }
     guard let parentItem = parentItem else {
       let newIds = newItems.map { newItem -> ItemID in
-        let newId = ItemID()
+        let newId = newItem.hash
         itemsForIds[newId] = newItem
         idsForItems[newItem] = newId
         nodesForIds[newId] = .init(parent: nil, children: [])
@@ -125,7 +125,7 @@ public extension DiffableDataSourceSnapshot {
       return false
     }
     let newIds = newItems.map { newItem -> ItemID in
-      let newId = ItemID()
+      let newId = newItem.hash
       itemsForIds[newId] = newItem
       idsForItems[newItem] = newId
       nodesForIds[newId] = .init(parent: parentId, children: [])
@@ -336,7 +336,7 @@ private extension DiffableDataSourceSnapshot {
     }
     let existingIds = newItems.compactMap(idForItem)
     guard existingIds.isEmpty else {
-      let ids = existingIds.map(\.uuidString).joined(separator: ", ")
+      let ids = existingIds.map(String.init).joined(separator: ", ")
       os_log(.error, log: errors, "Items with IDs “%s” have already been added", ids)
       return false
     }
@@ -384,7 +384,7 @@ private extension DiffableDataSourceSnapshot {
     }
     guard let parentId = targetNode.parent else {
       let newIds = newItems.map { newItem -> ItemID in
-        let newId = ItemID()
+        let newId = newItem.hash
         itemsForIds[newId] = newItem
         idsForItems[newItem] = newId
         nodesForIds[newId] = .init(parent: nil, children: [])
@@ -396,7 +396,7 @@ private extension DiffableDataSourceSnapshot {
       return true
     }
     let newIds = newItems.map { newItem -> ItemID in
-      let newId = ItemID()
+      let newId = newItem.hash
       itemsForIds[newId] = newItem
       idsForItems[newItem] = newId
       nodesForIds[newId] = .init(parent: parentId, children: [])

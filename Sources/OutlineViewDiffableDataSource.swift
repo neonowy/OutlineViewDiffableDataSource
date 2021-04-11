@@ -92,7 +92,7 @@ open class OutlineViewDiffableDataSource: NSObject, NSOutlineViewDataSource, NSO
   /// Enables dragging for items which return Pasteboard representation.
   open func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
     guard let item = item as? Item, let itemId = diffableSnapshot.idForItem(item) else { return nil }
-    return NSPasteboardItem(pasteboardPropertyList: itemId.uuidString, ofType: .itemID)
+    return NSPasteboardItem(pasteboardPropertyList: itemId, ofType: .itemID)
   }
 
   /// This override is necessary to disable special mouse down behavior in the outline view.
@@ -297,8 +297,8 @@ private extension OutlineViewDiffableDataSource {
 
     // Retrieve dragged items
     let draggedItems: [Item] = pasteboardItems.compactMap { pasteboardItem in
-      guard let propertyList = pasteboardItem.propertyList(forType: .itemID) as? String,
-        let itemId = DiffableDataSourceSnapshot.ItemID(uuidString: propertyList) else { return nil }
+      guard let propertyList = pasteboardItem.propertyList(forType: .itemID) as? Int else { return nil }
+      let itemId = DiffableDataSourceSnapshot.ItemID(propertyList)
       return diffableSnapshot.itemForId(itemId)
     }
     guard draggedItems.count == pasteboardItems.count else { return nil }
